@@ -2,35 +2,40 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, orientation=landscape">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ちー・よっくん 🌟 冒険ToDo</title>
     <style>
+        /* 画面からはみ出さないよう調整 */
         body { margin: 0; font-family: sans-serif; background: #E8F5E9; display: flex; flex-direction: column; height: 100vh; overflow: hidden; text-align: center; }
-        #top-area { flex: 0.8; background: #C8E6C9; border-bottom: 5px solid #81C784; display: flex; flex-direction: column; justify-content: center; position: relative; }
-        #clock { font-size: 40px; font-weight: bold; color: #1B5E20; }
-        #bottom-area { flex: 2; display: flex; flex-direction: row; }
-        .player-area { flex: 1; display: flex; flex-direction: column; padding: 10px; border-right: 3px solid #81C784; position: relative; transition: 0.5s; }
+        
+        /* 時計の高さを少し抑えて確実に表示 */
+        #top-area { height: 15vh; background: #C8E6C9; border-bottom: 5px solid #81C784; display: flex; align-items: center; justify-content: center; position: relative; }
+        #clock { font-size: 8vw; font-weight: bold; color: #1B5E20; line-height: 1; }
+        
+        #bottom-area { flex: 1; display: flex; flex-direction: row; overflow: hidden; }
+        .player-area { flex: 1; display: flex; flex-direction: column; padding: 5px; border-right: 2px solid #81C784; position: relative; }
         #yokkun-area { border-right: none; }
-        .player-name { font-size: 24px; font-weight: bold; background: rgba(255,255,255,0.7); border-radius: 15px; margin-bottom: 5px; padding: 5px; }
-        .task-title { font-size: 20px; font-weight: bold; height: 3em; display: flex; align-items: center; justify-content: center; line-height: 1.2; color: #2E7D32; }
-        .timer-display { font-size: 22px; color: #D32F2F; font-weight: bold; margin: 5px 0; background: white; border-radius: 10px; display: inline-block; padding: 2px 15px; }
-        .score-display { font-size: 18px; color: #388E3C; font-weight: bold; }
-        .img-box { height: 140px; display: flex; align-items: center; justify-content: center; }
-        .treasure-img { width: 180px; transition: 0.3s ease-out; }
-        .btn-done { background: #8BC34A; color: white; border: none; padding: 12px 40px; font-size: 26px; font-weight: bold; border-radius: 50px; box-shadow: 0 5px #689F38; cursor: pointer; }
-        .btn-done:active { transform: translateY(3px); box-shadow: none; }
-        .exchange-btn { background: #FF9800; color: white; border: none; padding: 5px 10px; border-radius: 10px; font-weight: bold; margin-top: 5px; cursor: pointer; display: none; }
-        .clear-screen { background: linear-gradient(135deg, #FFEB3B, #FF9800) !important; color: #4E342E; }
-        @keyframes pika { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
-        .pika-points { font-size: 26px; font-weight: bold; animation: pika 0.8s infinite; color: #E65100; margin-top: 10px; }
-        .reset-link { position: absolute; bottom: 5px; left: 5px; font-size: 10px; color: #666; cursor: pointer; text-decoration: underline; background: none; border: none; }
+        
+        .player-name { font-size: 3vw; font-weight: bold; background: rgba(255,255,255,0.7); border-radius: 10px; margin: 2px; }
+        .score-display { font-size: 2vw; color: #388E3C; font-weight: bold; }
+        .timer-display { font-size: 4vw; color: #D32F2F; font-weight: bold; background: white; border-radius: 10px; padding: 0 10px; margin: 2px; }
+        
+        .task-title { font-size: 2.5vw; font-weight: bold; height: 2.5em; display: flex; align-items: center; justify-content: center; color: #2E7D32; }
+        .img-box { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+        .treasure-img { width: 30%; max-width: 150px; transition: 0.3s; }
+        
+        .btn-done { background: #8BC34A; color: white; border: none; padding: 10px 30px; font-size: 4vw; font-weight: bold; border-radius: 50px; box-shadow: 0 5px #689F38; cursor: pointer; margin-bottom: 10px; }
+        .exchange-btn { background: #FF9800; color: white; border: none; padding: 5px 10px; border-radius: 10px; font-size: 1.5vw; cursor: pointer; display: none; }
+        
+        .clear-screen { background: linear-gradient(135deg, #FFEB3B, #FF9800) !important; }
+        .reset-link { position: absolute; top: 5px; left: 5px; font-size: 10px; color: #666; background: none; border: none; text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div id="top-area">
+        <button class="reset-link" onclick="resetAll()">リセット</button>
         <div id="clock">00:00:00</div>
-        <button class="reset-link" onclick="resetAll()">ポイントリセット</button>
     </div>
 
     <div id="bottom-area">
@@ -38,17 +43,16 @@
             <div class="player-name">🌟 ちー 🌟</div>
             <div id="chee-score" class="score-display">ポイント: 0</div>
             <button id="chee-exchange" class="exchange-btn" onclick="exchange('chee')">🎁 プレゼントとこうかん！</button>
-            <div><span id="chee-timer" class="timer-display">--:--</span></div>
+            <div id="chee-timer" class="timer-display">--:--</div>
             <div id="chee-content">
                 <div id="chee-title" class="task-title">準備中...</div>
                 <div class="img-box"><img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
                 <button class="btn-done" onclick="nextTask('chee')">できた！</button>
             </div>
             <div id="chee-congrats" style="display:none;">
-                <h2 style="font-size:32px; margin:10px 0;">👑 クリア！ 👑</h2>
-                <div id="chee-final-points" class="pika-points">0 pt</div>
-                <p>すごいぞ！ちー！</p>
-                <button onclick="location.reload()" style="margin-top:10px; font-size:12px; opacity:0.6;">またあしたね！</button>
+                <h2>👑 クリア！ 👑</h2>
+                <div id="chee-final-points" style="font-size:20px; font-weight:bold; color:red;"></div>
+                <button onclick="location.reload()">またあしたね！</button>
             </div>
         </div>
 
@@ -56,37 +60,24 @@
             <div class="player-name">🌟 よっくん 🌟</div>
             <div id="yokkun-score" class="score-display">ポイント: 0</div>
             <button id="yokkun-exchange" class="exchange-btn" onclick="exchange('yokkun')">🎁 プレゼントとこうかん！</button>
-            <div><span id="yokkun-timer" class="timer-display">--:--</span></div>
+            <div id="yokkun-timer" class="timer-display">--:--</div>
             <div id="yokkun-content">
                 <div id="yokkun-title" class="task-title">準備中...</div>
                 <div class="img-box"><img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
                 <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
             </div>
             <div id="yokkun-congrats" style="display:none;">
-                <h2 style="font-size:32px; margin:10px 0;">👑 クリア！ 👑</h2>
-                <div id="yokkun-final-points" class="pika-points">0 pt</div>
-                <p>さすが！よっくん！</p>
-                <button onclick="location.reload()" style="margin-top:10px; font-size:12px; opacity:0.6;">またあしたね！</button>
+                <h2>👑 クリア！ 👑</h2>
+                <div id="yokkun-final-points" style="font-size:20px; font-weight:bold; color:red;"></div>
+                <button onclick="location.reload()">またあしたね！</button>
             </div>
         </div>
     </div>
 
     <script>
         const data = {
-            chee: [
-                {t: "1）おきる！！", s: 600}, {t: "2）おしっこにいく！！", s: 300},
-                {t: "3）てをあらう！！", s: 120}, {t: "4）ごはん！！", s: 900},
-                {t: "5）うんち！！", s: 480}, {t: "6）きがえる！！", s: 300},
-                {t: "7）すー！はー！！", s: 120}, {t: "8）はをみがく！！", s: 300},
-                {t: "9）めがね！！！", s: 120}, {t: "10）うわぎ！！！", s: 180}
-            ],
-            yokkun: [
-                {t: "1）おきる！！", s: 600}, {t: "2）おしっこ！！", s: 300},
-                {t: "3）手をあらう！！", s: 120}, {t: "4）ごはん！！", s: 900},
-                {t: "5）うんち！！", s: 600}, {t: "6）きがえる！！", s: 180},
-                {t: "7）はをみがく！！", s: 300}, {t: "8）すいとう！！<br>きゅうしょくぶくろ！！", s: 120},
-                {t: "9）はんかち！うわぎ！<br>ぼうし！！", s: 180}, {t: "10）ランドセル！！", s: 120}
-            ]
+            chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこにいく！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
+            yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうしょくぶくろ！！",s:120},{t:"9）はんかち・うわぎ・ぼうし！！",s:180},{t:"10）ランドセル！！",s:120}]
         };
 
         let players = {
@@ -94,98 +85,60 @@
             yokkun: { idx: 0, left: 0, total: 0, points: 0, tid: null }
         };
 
-        function save() {
-            const saveData = { chee: players.chee.points, yokkun: players.yokkun.points };
-            localStorage.setItem('adventure_points_v5', JSON.stringify(saveData));
-        }
-
-        function load() {
-            const saved = localStorage.getItem('adventure_points_v5');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                players.chee.points = parsed.chee || 0;
-                players.yokkun.points = parsed.yokkun || 0;
-            }
-            updateScoreDisplay('chee');
-            updateScoreDisplay('yokkun');
-        }
-
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
         setInterval(updateClock, 1000);
 
+        function save() { localStorage.setItem('adventure_v6', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function load() {
+            const s = localStorage.getItem('adventure_v6');
+            if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
+            updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
+        }
+
         function updateScoreDisplay(pKey) {
             document.getElementById(`${pKey}-score`).innerText = `ポイント: ${players[pKey].points}`;
-            const btn = document.getElementById(`${pKey}-exchange`);
-            btn.style.display = (players[pKey].points >= 5000) ? 'inline-block' : 'none';
+            document.getElementById(`${pKey}-exchange`).style.display = (players[pKey].points >= 5000) ? 'inline-block' : 'none';
         }
 
         function startTask(pKey) {
             let p = players[pKey];
-            let taskList = data[pKey];
             if(p.tid) clearInterval(p.tid);
-            p.total = p.left = taskList[p.idx].s;
-            document.getElementById(`${pKey}-title`).innerHTML = taskList[p.idx].t;
+            p.total = p.left = data[pKey][p.idx].s;
+            document.getElementById(`${pKey}-title`).innerText = data[pKey][p.idx].t;
             
             p.tid = setInterval(() => {
-                p.left--;
-                if(p.left < 0) p.left = 0;
+                if(p.left > 0) p.left--;
                 const m = Math.floor(p.left/60), s = p.left%60;
                 document.getElementById(`${pKey}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
-                
-                const r = p.left / p.total;
-                const el = document.getElementById(`${pKey}-img`);
-                if(r > 0.75) el.style.width = '180px';
-                else if(r > 0.5) el.style.width = '135px';
-                else if(r > 0.25) el.style.width = '90px';
-                else if(r > 0) el.style.width = '45px';
-                else { el.style.width = '0px'; clearInterval(p.tid); }
+                document.getElementById(`${pKey}-img`).style.width = (30 * (p.left/p.total)) + "%";
+                if(p.left <= 0) clearInterval(p.tid);
             }, 1000);
         }
 
         function nextTask(pKey) {
             let p = players[pKey];
-            if(p.left > 0) p.points += p.left;
-            updateScoreDisplay(pKey);
-            save();
-
+            p.points += p.left;
+            updateScoreDisplay(pKey); save();
             p.idx++;
-            if(p.idx < data[pKey].length) {
-                document.getElementById(`${pKey}-img`).style.width = '180px';
-                startTask(pKey);
-            } else {
+            if(p.idx < data[pKey].length) { startTask(pKey); }
+            else {
                 clearInterval(p.tid);
                 document.getElementById(`${pKey}-content`).style.display = 'none';
-                document.getElementById(`${pKey}-timer`).style.display = 'none';
                 document.getElementById(`${pKey}-congrats`).style.display = 'block';
                 document.getElementById(`${pKey}-area`).classList.add('clear-screen');
-                document.getElementById(`${pKey}-final-points`).innerText = `${p.points} ポイント獲得中！！`;
+                document.getElementById(`${pKey}-final-points`).innerText = `トータル: ${p.points} ポイント`;
             }
         }
 
         function exchange(pKey) {
-            const name = (pKey === 'chee') ? 'ちー' : 'よっくん';
-            if (confirm(`5000ポイントたまったね！\n${name}、プレゼントとこうかんしますか？`)) {
-                players[pKey].points -= 5000;
-                updateScoreDisplay(pKey);
-                save();
-                alert('プレゼントとこうかんしました！おめでとう！！');
+            if(confirm('5000ポイントでプレゼントと交換しますか？')){
+                players[pKey].points -= 5000; updateScoreDisplay(pKey); save(); alert('交換しました！');
             }
         }
 
-        function resetAll() {
-            if (confirm('すべてのポイントを0にもどしますか？')) {
-                players.chee.points = 0;
-                players.yokkun.points = 0;
-                updateScoreDisplay('chee');
-                updateScoreDisplay('yokkun');
-                save();
-            }
-        }
+        function resetAll() { if(confirm('ポイントを0にしますか？')){ players.chee.points=0; players.yokkun.points=0; updateScoreDisplay('chee'); updateScoreDisplay('yokkun'); save(); } }
 
-        updateClock();
-        load();
-        startTask('chee');
-        startTask('yokkun');
+        window.onload = () => { updateClock(); load(); startTask('chee'); startTask('yokkun'); };
     </script>
 </body>
 </html>
