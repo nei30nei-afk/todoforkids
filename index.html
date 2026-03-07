@@ -34,7 +34,8 @@
         .score-display { font-size: 1.8vh; color: #388E3C; font-weight: bold; }
         .timer-display { font-size: 4vh; color: #D32F2F; font-weight: bold; background: white; border-radius: 8px; padding: 0 10px; }
         
-        .individual-reset { font-size: 9px; color: #999; background: none; border: 1px solid #ccc; border-radius: 4px; padding: 1px 4px; cursor: pointer; margin-top: 5px; }
+        /* 累計リセットボタン（赤文字で注意を促す） */
+        .individual-reset { font-size: 9px; color: #d32f2f; background: none; border: 1px solid #ffcdd2; border-radius: 4px; padding: 1px 4px; cursor: pointer; margin-top: 5px; }
 
         /* 右側：アクションエリア */
         .action-side { width: 65%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -74,7 +75,7 @@
                 <div class="player-name">🌟 ちー 🌟</div>
                 <div id="chee-score" class="score-display">累計: 0 pt</div>
                 <div id="chee-timer" class="timer-display">--:--</div>
-                <button class="individual-reset" onclick="resetPlayer('chee')">ちーを最初から</button>
+                <button class="individual-reset" onclick="clearPoints('chee')">ちーのptをぜんぶ消す</button>
             </div>
             <div class="action-side" id="chee-content">
                 <div id="chee-title" class="task-title">準備中...</div>
@@ -97,7 +98,7 @@
                 <div class="player-name">🌟 よっくん 🌟</div>
                 <div id="yokkun-score" class="score-display">累計: 0 pt</div>
                 <div id="yokkun-timer" class="timer-display">--:--</div>
-                <button class="individual-reset" onclick="resetPlayer('yokkun')">よっくんを最初から</button>
+                <button class="individual-reset" onclick="clearPoints('yokkun')">よっくんのptをぜんぶ消す</button>
             </div>
             <div class="action-side" id="yokkun-content">
                 <div id="yokkun-title" class="task-title">準備中...</div>
@@ -126,9 +127,9 @@
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
         setInterval(updateClock, 1000);
 
-        function save() { localStorage.setItem('adventure_v11', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function save() { localStorage.setItem('adventure_v12', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
         function load() {
-            const s = localStorage.getItem('adventure_v11');
+            const s = localStorage.getItem('adventure_v12');
             if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
             updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
         }
@@ -168,8 +169,6 @@
                 document.getElementById(`${pKey}-congrats`).style.display = 'flex';
                 document.getElementById(`${pKey}-area`).classList.add('clear-screen');
                 document.getElementById(`${pKey}-final-points`).innerText = `累計 ${p.points} pt ！！`;
-                
-                // 5000pt超えていたら交換ボタンを出す
                 if(p.points >= 5000) {
                     document.getElementById(`${pKey}-exchange`).style.display = 'block';
                 }
@@ -182,16 +181,21 @@
                 players[pKey].points -= 5000;
                 updateScoreDisplay(pKey); 
                 save(); 
-                document.getElementById(`${pKey}-exchange`).style.display = 'none'; // 交換したら消す
+                document.getElementById(`${pKey}-exchange`).style.display = 'none';
                 document.getElementById(`${pKey}-final-points`).innerText = `累計 ${players[pKey].points} pt ！！`;
                 alert('プレゼントとこうかんしました！おめでとう！');
             }
         }
 
-        function resetPlayer(pKey) {
-            if(confirm(`今日のタスクを最初からやり直しますか？`)){
+        // 累計ポイントをリセットする関数
+        function clearPoints(pKey) {
+            const name = (pKey === 'chee') ? 'ちー' : 'よっくん';
+            if(confirm(`${name}の「累計ポイント」を0にもどしますか？\n（今日のがんばった分も消えてしまいます）`)){
+                players[pKey].points = 0;
                 players[pKey].idx = 0;
-                startTask(pKey);
+                updateScoreDisplay(pKey);
+                save();
+                startTask(pKey); // タスクも1番目からに戻す
             }
         }
 
