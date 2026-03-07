@@ -65,4 +65,123 @@
             <div class="info-side">
                 <div class="player-name">🌟 ちー 🌟</div>
                 <div id="chee-score" class="score-display">ポイント: 0</div>
-                <button id="chee-
+                <button id="chee-exchange" class="exchange-btn" onclick="exchange('chee')">🎁 プレゼント交換</button>
+                <div id="chee-timer" class="timer-display">--:--</div>
+                <button class="individual-reset" onclick="resetPlayer('chee')">ちーのリセット</button>
+            </div>
+            <div class="action-side" id="chee-content">
+                <div id="chee-title" class="task-title">準備中...</div>
+                <div class="img-box"><img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('chee')">できた！</button>
+            </div>
+            <div id="chee-congrats" class="congrats-layer">
+                <h2 style="font-size:4vh; margin:0;">👑 クリア！</h2>
+                <div id="chee-final-points" style="font-size:2.5vh; font-weight:bold; color:red; margin:5px 0;"></div>
+                <button class="btn-done" style="width:60%;" onclick="resetPlayer('chee')">もういっかい！</button>
+            </div>
+        </div>
+
+        <div id="clock-overlay">
+            <div id="clock">00:00:00</div>
+        </div>
+
+        <div id="yokkun-area" class="player-area">
+            <div class="info-side">
+                <div class="player-name">🌟 よっくん 🌟</div>
+                <div id="yokkun-score" class="score-display">ポイント: 0</div>
+                <button id="yokkun-exchange" class="exchange-btn" onclick="exchange('yokkun')">🎁 プレゼント交換</button>
+                <div id="yokkun-timer" class="timer-display">--:--</div>
+                <button class="individual-reset" onclick="resetPlayer('yokkun')">よっくんのリセット</button>
+            </div>
+            <div class="action-side" id="yokkun-content">
+                <div id="yokkun-title" class="task-title">準備中...</div>
+                <div class="img-box"><img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
+            </div>
+            <div id="yokkun-congrats" class="congrats-layer">
+                <h2 style="font-size:4vh; margin:0;">👑 クリア！</h2>
+                <div id="yokkun-final-points" style="font-size:2.5vh; font-weight:bold; color:red; margin:5px 0;"></div>
+                <button class="btn-done" style="width:60%;" onclick="resetPlayer('yokkun')">もういっかい！</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
+            yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうぶくろ",s:120},{t:"9）はんかち・うわぎ・ぼうし",s:180},{t:"10）ランドセル！！",s:120}]
+        };
+
+        let players = {
+            chee: { idx: 0, left: 0, total: 0, points: 0, tid: null },
+            yokkun: { idx: 0, left: 0, total: 0, points: 0, tid: null }
+        };
+
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
+        setInterval(updateClock, 1000);
+
+        function save() { localStorage.setItem('adventure_v9', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function load() {
+            const s = localStorage.getItem('adventure_v9');
+            if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
+            updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
+        }
+
+        function updateScoreDisplay(pKey) {
+            document.getElementById(`${pKey}-score`).innerText = `ポイント: ${players[pKey].points}`;
+            document.getElementById(`${pKey}-exchange`).style.display = (players[pKey].points >= 5000) ? 'inline-block' : 'none';
+        }
+
+        function startTask(pKey) {
+            let p = players[pKey];
+            if(p.tid) clearInterval(p.tid);
+            p.total = p.left = data[pKey][p.idx].s;
+            document.getElementById(`${pKey}-title`).innerText = data[pKey][p.idx].t;
+            document.getElementById(`${pKey}-content`).style.visibility = 'visible';
+            document.getElementById(`${pKey}-congrats`).style.display = 'none';
+            document.getElementById(`${pKey}-area`).classList.remove('clear-screen');
+            
+            p.tid = setInterval(() => {
+                if(p.left > 0) p.left--;
+                const m = Math.floor(p.left/60), s = p.left%60;
+                document.getElementById(`${pKey}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                document.getElementById(`${pKey}-img`).style.height = (100 * (p.left/p.total)) + "%";
+                if(p.left <= 0) clearInterval(p.tid);
+            }, 1000);
+        }
+
+        function nextTask(pKey) {
+            let p = players[pKey];
+            p.points += p.left;
+            updateScoreDisplay(pKey); save();
+            p.idx++;
+            if(p.idx < data[pKey].length) { startTask(pKey); }
+            else {
+                clearInterval(p.tid);
+                document.getElementById(`${pKey}-content`).style.visibility = 'hidden';
+                document.getElementById(`${pKey}-congrats`).style.display = 'flex';
+                document.getElementById(`${pKey}-area`).classList.add('clear-screen');
+                document.getElementById(`${pKey}-final-points`).innerText = `トータル: ${p.points} pt`;
+            }
+        }
+
+        function exchange(pKey) {
+            if(confirm('5000ポイントでプレゼントと交換しますか？')){
+                players[pKey].points -= 5000; updateScoreDisplay(pKey); save(); alert('交換しました！');
+            }
+        }
+
+        function resetPlayer(pKey) {
+            const name = (pKey === 'chee') ? 'ちー' : 'よっくん';
+            if(confirm(`${name}のポイントを0にして最初から始めますか？`)){
+                players[pKey].idx = 0;
+                players[pKey].points = 0;
+                updateScoreDisplay(pKey); save();
+                startTask(pKey);
+            }
+        }
+
+        window.onload = () => { updateClock(); load(); startTask('chee'); startTask('yokkun'); };
+    </script>
+</body>
+</html>
