@@ -3,44 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToDo</title>
+    <title>ちー・よっくん 🌟 ToDo</title>
     <style>
-        body { margin: 0; font-family: sans-serif; text-align: center; background: #F0F8FF; }
+        body { margin: 0; font-family: sans-serif; text-align: center; background: #F0F8FF; overflow-x: hidden; }
         #top-area { background: #C8E6C9; padding: 10px; border-bottom: 3px solid #81C784; }
-        #clock { font-size: 60px; font-weight: bold; color: #2E7D32; }
-        #bottom-area { display: flex; height: calc(100vh - 100px); }
-        .player-area { flex: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; border-right: 1px solid #CCC; }
-        .timer-display { font-size: 32px; font-weight: bold; color: #D32F2F; margin: 10px 0; }
-        .task-title { font-size: 20px; font-weight: bold; height: 3em; }
-        .img-box { height: 120px; display: flex; align-items: center; }
-        .treasure-img { width: 140px; transition: width 0.2s; }
-        .btn { background: #8BC34A; color: white; border: none; padding: 15px 30px; font-size: 24px; border-radius: 50px; box-shadow: 0 5px #689F38; }
-        .btn:active { transform: translateY(3px); box-shadow: 0 2px #689F38; }
-        .btn:disabled { background: #CCC; box-shadow: none; }
+        #clock { font-size: 70px; font-weight: bold; color: #2E7D32; }
+        #bottom-area { display: flex; height: calc(100vh - 120px); }
+        .player-area { flex: 1; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        #yokkun-area { border-left: 2px dashed #999; }
+        .player-name { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
+        .score-display { font-size: 18px; color: #555; margin-bottom: 5px; }
+        .timer-display { font-size: 30px; font-weight: bold; color: #D32F2F; margin-bottom: 10px; }
+        .task-title { font-size: 20px; font-weight: bold; min-height: 2.5em; }
+        .img-box { height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; }
+        .treasure-img { width: 140px; transition: width 0.3s ease; }
+        .btn { background: #8BC34A; color: white; border: none; padding: 15px 30px; font-size: 24px; font-weight: bold; border-radius: 50px; box-shadow: 0 5px #689F38; cursor: pointer; }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px #689F38; }
+        .btn:disabled { background: #CCC; box-shadow: 0 5px #999; cursor: default; }
+        .reset-btn { margin-top: 20px; background: none; border: none; color: #AAA; font-size: 11px; text-decoration: underline; }
     </style>
 </head>
 <body>
     <div id="top-area"><div id="clock">00:00:00</div></div>
     <div id="bottom-area">
-        <div class="player-area">
-            <div>🌟 ちー 🌟</div>
-            <div id="chee-score">0</div>
-            <div class="timer-display" id="chee-timer">00:00</div>
-            <div class="task-title" id="chee-task">-</div>
-            <div class="img-box"><img id="chee-img" class="treasure-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E🎁%3C/text%3E%3C/svg%3E"></div>
+        <div class="player-area" id="chee-area">
+            <div class="player-name">🌟 ちー 🌟</div>
+            <div class="score-display" id="chee-total">トータル: 0</div>
+            <div class="timer-display" id="chee-timer">05:00</div>
+            <div class="task-title" id="chee-task">読み込み中...</div>
+            <div class="img-box">
+                <img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png">
+            </div>
             <button class="btn" id="chee-btn" onclick="done('chee')">できた！</button>
-            <button style="font-size:9px;margin-top:10px" onclick="reset('chee')">リセット</button>
+            <button class="reset-btn" onclick="resetPoints('chee')">ちーのポイントをリセット</button>
         </div>
-        <div class="player-area">
-            <div>🌟 よっくん 🌟</div>
-            <div id="yokkun-score">0</div>
-            <div class="timer-display" id="yokkun-timer">00:00</div>
-            <div class="task-title" id="yokkun-task">-</div>
-            <div class="img-box"><img id="yokkun-img" class="treasure-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E🎁%3C/text%3E%3C/svg%3E"></div>
+        <div class="player-area" id="yokkun-area">
+            <div class="player-name">🌟 よっくん 🌟</div>
+            <div class="score-display" id="yokkun-total">トータル: 0</div>
+            <div class="timer-display" id="yokkun-timer">05:00</div>
+            <div class="task-title" id="yokkun-task">読み込み中...</div>
+            <div class="img-box">
+                <img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png">
+            </div>
             <button class="btn" id="yokkun-btn" onclick="done('yokkun')">できた！</button>
-            <button style="font-size:9px;margin-top:10px" onclick="reset('yokkun')">リセット</button>
+            <button class="reset-btn" onclick="resetPoints('yokkun')">よっくんのポイントをリセット</button>
         </div>
     </div>
+
     <script>
         const list = [
             { t: "1) おきる！！", s: 300 },
@@ -50,42 +59,80 @@
             { t: "5) じゅんび（カバン）", s: 300 },
             { t: "🌟 ぜんぶ かんりょう！", s: 1 }
         ];
-        let state = { chee: { idx: 0, left: 300, total: 0 }, yokkun: { idx: 0, left: 300, total: 0 } };
-        function save() { localStorage.setItem('kids_v3', JSON.stringify(state)); }
+
+        let state = {
+            chee: { idx: 0, left: 300, total: 0 },
+            yokkun: { idx: 0, left: 300, total: 0 }
+        };
+
+        function save() {
+            localStorage.setItem('kids_todo_final', JSON.stringify(state));
+        }
+
         function load() {
-            const s = localStorage.getItem('kids_v3');
-            if(s) state = JSON.parse(s);
-            render('chee'); render('yokkun');
+            const saved = localStorage.getItem('kids_todo_final');
+            if (saved) {
+                state = JSON.parse(saved);
+            }
+            render('chee');
+            render('yokkun');
         }
-        function render(k) {
-            const p = state[k]; const t = list[p.idx];
-            document.getElementById(k+'-task').innerText = t.t;
-            const m = Math.floor(p.left/60); const s = p.left%60;
-            document.getElementById(k+'-timer').innerText = m+':'+(s<10?'0':'')+s;
-            document.getElementById(k+'-score').innerText = 'トータル: ' + p.total;
-            document.getElementById(k+'-img').style.width = (p.idx >= list.length-1) ? '140px' : (140 * (p.left/t.s)) + 'px';
-            const b = document.getElementById(k+'-btn');
-            if(p.idx >= list.length-1) { b.innerText='完了！'; b.disabled=true; }
-            else { b.innerText='できた！'; b.disabled=false; }
-        }
-        function done(k) {
-            if(state[k].idx < list.length-1) {
-                state[k].total += 10; state[k].idx++; state[k].left = list[state[k].idx].s;
-                save(); render(k);
+
+        function render(pKey) {
+            const p = state[pKey];
+            const currentTask = list[p.idx];
+            
+            document.getElementById(pKey + '-task').innerText = currentTask.t;
+            document.getElementById(pKey + '-total').innerText = "トータル: " + p.total;
+            
+            const m = Math.floor(p.left / 60);
+            const s = p.left % 60;
+            document.getElementById(pKey + '-timer').innerText = m + ":" + (s < 10 ? "0" : "") + s;
+
+            // 画像の縮小演出
+            const img = document.getElementById(pKey + '-img');
+            if (p.idx >= list.length - 1) {
+                img.style.width = "140px";
+                document.getElementById(pKey + '-btn').innerText = "あしたもがんばる！";
+                document.getElementById(pKey + '-btn').disabled = true;
+            } else {
+                img.style.width = (140 * (p.left / currentTask.s)) + "px";
+                document.getElementById(pKey + '-btn').innerText = "できた！";
+                document.getElementById(pKey + '-btn').disabled = false;
             }
         }
-        function reset(k) {
-            if(confirm('リセットしますか？')) {
-                state[k] = { idx: 0, left: 300, total: 0 };
-                save(); render(k);
+
+        function done(pKey) {
+            const p = state[pKey];
+            if (p.idx < list.length - 1) {
+                p.total += 10;
+                p.idx++;
+                p.left = list[p.idx].s;
+                save();
+                render(pKey);
             }
         }
+
+        function resetPoints(pKey) {
+            if (confirm(pKey + ' の状態を最初に戻しますか？')) {
+                state[pKey] = { idx: 0, left: 300, total: 0 };
+                save();
+                render(pKey);
+            }
+        }
+
         setInterval(() => {
-            document.getElementById('clock').innerText = new Date().toTimeString().split(' ')[0];
-            ['chee','yokkun'].forEach(k => {
-                if(state[k].left > 0 && state[k].idx < list.length-1) { state[k].left--; render(k); }
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+            
+            ['chee', 'yokkun'].forEach(pKey => {
+                if (state[pKey].left > 0 && state[pKey].idx < list.length - 1) {
+                    state[pKey].left--;
+                    render(pKey);
+                }
             });
         }, 1000);
+
         window.onload = load;
     </script>
 </body>
