@@ -144,4 +144,48 @@
 
         function nextTask(pKey) {
             let p = players[pKey];
-            if(p.left > 0) p.points +=
+            if(p.left > 0) p.points += p.left;
+            updateScoreDisplay(pKey);
+            save();
+
+            p.idx++;
+            if(p.idx < data[pKey].length) {
+                document.getElementById(`${pKey}-img`).style.width = '180px';
+                startTask(pKey);
+            } else {
+                clearInterval(p.tid);
+                document.getElementById(`${pKey}-content`).style.display = 'none';
+                document.getElementById(`${pKey}-timer`).style.display = 'none';
+                document.getElementById(`${pKey}-congrats`).style.display = 'block';
+                document.getElementById(`${pKey}-area`).classList.add('clear-screen');
+                document.getElementById(`${pKey}-final-points`).innerText = `${p.points} ポイント獲得中！！`;
+            }
+        }
+
+        function exchange(pKey) {
+            const name = (pKey === 'chee') ? 'ちー' : 'よっくん';
+            if (confirm(`5000ポイントたまったね！\n${name}、プレゼントとこうかんしますか？`)) {
+                players[pKey].points -= 5000;
+                updateScoreDisplay(pKey);
+                save();
+                alert('プレゼントとこうかんしました！おめでとう！！');
+            }
+        }
+
+        function resetAll() {
+            if (confirm('すべてのポイントを0にもどしますか？')) {
+                players.chee.points = 0;
+                players.yokkun.points = 0;
+                updateScoreDisplay('chee');
+                updateScoreDisplay('yokkun');
+                save();
+            }
+        }
+
+        updateClock();
+        load();
+        startTask('chee');
+        startTask('yokkun');
+    </script>
+</body>
+</html>
