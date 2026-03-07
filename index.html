@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ちー・よっくん 🌟 ToDo</title>
+    <style>
+        body { margin: 0; font-family: sans-serif; background: #E8F5E9; text-align: center; overflow-x: hidden; }
+        #top-area { background: #C8E6C9; border-bottom: 5px solid #81C784; padding: 15px 0; position: sticky; top: 0; z-index: 100; }
+        #clock { font-size: 80px; font-weight: bold; color: #1B5E20; line-height: 1; }
+        #bottom-area { display: flex; flex-direction: row; min-height: 85vh; }
+        .player-area { flex: 1; padding: 5px; border-right: 2px solid #81C784; display: flex; flex-direction: column; align-items: center; }
+        #yokkun-area { border-right: none; }
+        .player-name { font-size: 22px; font-weight: bold; background: rgba(255,255,255,0.7); border-radius: 15px; margin-bottom: 5px; padding: 5px; white-space: nowrap; width: 90%; }
+        .score-display { font-size: 18px; color: #388E3C; font-weight: bold; margin-bottom: 5px; }
+        .timer-display { font-size: 26px; color: #D32F2F; font-weight: bold; background: white; border-radius: 10px; padding: 2px 15px; margin-bottom: 5px; }
+        .task-title { font-size: 18px; font-weight: bold; height: 3em; display: flex; align-items: center; justify-content: center; color: #2E7D32; line-height: 1.2; }
+        .img-box { height: 130px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .treasure-img { width: 140px; transition: 0.3s; }
+        .btn-done { background: #8BC34A; color: white; border: none; padding: 12px 0; width: 90%; font-size: 22px; font-weight: bold; border-radius: 50px; box-shadow: 0 5px #689F38; cursor: pointer; }
+        .btn-done:active { transform: translateY(3px); box-shadow: none; }
+        
+        /* クリア演出 */
+        .clear-screen { background: linear-gradient(135deg, #FFEB3B, #FF9800) !important; color: #4E342E; }
+        @keyframes pika { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
+        .pika-points { font-size: 26px; font-weight: bold; animation: pika 0.8s infinite; color: #E65100; margin-top: 10px; }
+        
+        /* 交換ボタン（5000pt以上で出現） */
+        .btn-exchange { background: #FF4081; color: white; border: none; padding: 10px 20px; font-size: 18px; font-weight: bold; border-radius: 10px; margin-top: 10px; cursor: pointer; box-shadow: 0 4px #C2185B; }
+        .btn-exchange:active { transform: translateY(2px); box-shadow: none; }
+        
+        .btn-retry { background: white; color: #E65100; border: 2px solid #E65100; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .reset-btn { font-size: 10px; color: #999; background: none; border: none; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="top-area">
+        <div id="clock">00:00:00</div>
+    </div>
+
+    <div id="bottom-area">
+        <div id="chee-area" class="player-area">
+            <div class="player-name">🌟 ちー 🌟</div>
+            <div id="chee-score" class="score-display">トータル: 0</div>
+            <div id="chee-timer" class="timer-display">--:--</div>
+            <div id="chee-content">
+                <div id="chee-title" class="task-title">準備中...</div>
+                <div class="img-box"><img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('chee')">できた！</button>
+            </div>
+            <div id="chee-congrats" style="display:none;">
+                <h2 style="font-size:32px; margin:10px 0;">👑クリア！</h2>
+                <div id="chee-final-points" class="pika-points">0 pt</div>
+                <div id="chee-exchange-box"></div>
+                <button id="chee-retry-btn" class="btn-retry" onclick="waitNextDay('chee')">明日もがんばる</button>
+            </div>
+            <button class="reset-btn" onclick="resetScore('chee')">ポイントを0にする</button>
+        </div>
+
+        <div id="yokkun-area" class="player-area">
+            <div class="player-name">🌟 よっくん 🌟</div>
+            <div id="yokkun-score" class="score-display">トータル: 0</div>
+            <div id="yokkun-timer" class="timer-display">--:--</div>
+            <div id="yokkun-content">
+                <div id="yokkun-title" class="task-title">準備中...</div>
+                <div class="img-box"><img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
+            </div>
+            <div id="yokkun-congrats" style="display:none;">
+                <h2 style="font-size:32px; margin:10px 0;">👑クリア！</h2>
+                <div id="yokkun-final-points" class="pika-points">0 pt</div>
+                <div id="yokkun-exchange-box"></div>
+                <button id="yokkun-retry-btn" class="btn-retry" onclick="waitNextDay('yokkun')">明日もがんばる</button>
+            </div>
+            <button class="reset-btn" onclick="resetScore('yokkun')">ポイントを0にする</button>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            chee: [{t: "1）おきる！！", s: 600}, {t: "2）おしっこ！！", s: 300}, {t: "3）てをあらう！！", s: 120}, {t: "4）ごはん！！", s: 900}, {t: "5）うんち！！", s: 480}, {t: "6）きがえる！！", s: 300}, {t: "7）すー！はー！！", s: 120}, {t: "8）はをみがく！！", s: 300}, {t: "9）めがね！！！", s: 120}, {t: "10）うわぎ！！！", s: 180}],
+            yokkun: [{t: "1）おきる！！", s: 600}, {t: "2）おしっこ！！", s: 300}, {t: "3）手をあらう！！", s: 120}, {t: "4）ごはん！！", s: 900}, {t: "5）うんち！！", s: 600}, {t: "6）きがえる！！", s: 180}, {t: "7）はをみがく！！", s: 300}, {t: "8）すいとう！きゅうしょくぶくろ！！", s: 120}, {t: "9）はんかち！うわぎ！ぼうし！！", s: 180}, {t: "10）ランドセル！！", s: 120}]
+        };
+
+        let players = {
+            chee: { idx: 0, left: 0, points: parseInt(localStorage.getItem('chee_total') || 0), tid: null },
+            yokkun: { idx: 0, left: 0, points: parseInt(localStorage.getItem('yokkun_total') || 0), tid: null }
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('ja-JP', {hour12:false});
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        function refreshScoreDisplay() {
+            document.getElementById('chee-score').textContent = "トータル: " + players.chee.points;
+            document.getElementById('yokkun-score').textContent = "トータル: " + players.yokkun.points;
+        }
+        refreshScoreDisplay();
+
+        function startTask(pKey) {
+            let p = players[pKey];
+            let list = data[pKey];
+            if(p.tid) clearInterval(p.tid);
+            p.left = list[p.idx].s;
+            document.getElementById(pKey + '-title').innerHTML = list[p.idx].t;
+            p.tid = setInterval(function() {
+                p.left--;
+                if(p.left < 0) p.left = 0;
+                let min = Math.floor(p.left / 60), sec = p.left % 60;
+                document.getElementById(pKey + '-timer').textContent = min + ":" + String(sec).padStart(2, '0');
+                document.getElementById(pKey + '-img').style.width = (140 * (p.left / list[p.idx].s)) + "px";
+            }, 1000);
+        }
+
+        function nextTask(pKey) {
+            let p = players[pKey];
+            if(p.left > 0) p.points += p.left;
+            localStorage.setItem(pKey + '_total', p.points);
+            document.getElementById(pKey + '-score').textContent = "トータル: " + p.points;
+
+            p.idx++;
+            if(p.idx < data[pKey].length) {
+                startTask(pKey);
+            } else {
+                showCongrats(pKey);
+            }
+        }
+
+        function showCongrats(pKey) {
+            let p = players[pKey];
+            clearInterval(p.tid);
+            document.getElementById(pKey + '-content').style.display = 'none';
+            document.getElementById(pKey + '-timer').style.display = 'none';
+            document.getElementById(pKey + '-congrats').style.display = 'block';
+            document.getElementById(pKey + '-area').classList.add('clear-screen');
+            document.getElementById(pKey + '-final-points').textContent = "トータル: " + p.points + " pt";
+            
+            // 5000ポイント判定
+            const box = document.getElementById(pKey + '-exchange-box');
+            box.innerHTML = "";
+            if(p.points >= 5000) {
+                const btn = document.createElement('button');
+                btn.className = "btn-exchange";
+                btn.textContent = "🎁 こうかんする";
+                btn.onclick = () => exchangeReward(pKey);
+                box.appendChild(btn);
+            }
+        }
+
+        // 「明日もがんばる」を押した時の待機処理
+        function waitNextDay(pKey) {
+            const btn = document.getElementById(pKey + '-retry-btn');
+            btn.style.display = "none"; // ボタンを消す
+            const msg = document.createElement('p');
+            msg.style.fontWeight = "bold";
+            msg.textContent = "おやすみなさい！またあしたね🌟";
+            document.getElementById(pKey + '-congrats').appendChild(msg);
+            // 何もせず終了（リフレッシュされるまでこのまま）
+        }
+
+        function exchangeReward(pKey) {
+            if(confirm("5000ポイントをつかって、プレゼントとこうかんしますか？")) {
+                players[pKey].points -= 5000;
+                localStorage.setItem(pKey + '_total', players[pKey].points);
+                alert("ポイントをこうかんしたよ！おうちの人にみせてね！");
+                refreshScoreDisplay();
+                showCongrats(pKey); // 再表示してボタンを消す
+            }
+        }
+
+        function resetScore(pKey) {
+            if(confirm("ポイントを0にしますか？")) {
+                localStorage.setItem(pKey + '_total', 0);
+                players[pKey].points = 0;
+                refreshScoreDisplay();
+                location.reload(); // リセット時はリロード
+            }
+        }
+
+        startTask('chee');
+        startTask('yokkun');
+    </script>
+</body>
+</html>
