@@ -3,201 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ちー・よっくん 🌟 冒険ガチャ</title>
+    <title>ちー・よっくん 🌟 冒険ToDo & ガチャ</title>
     <style>
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            overflow: hidden; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; background: #FFF9C4;
+            overflow: hidden; font-family: sans-serif; background: #E8F5E9;
             touch-action: manipulation;
         }
-        body { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        body { display: flex; flex-direction: column; }
+        #main-container { flex: 1; display: flex; flex-direction: column; position: relative; }
 
-        /* ガチャ本体の見た目 */
+        /* --- ToDoエリアのスタイル --- */
+        .player-area { 
+            flex: 1; display: flex; flex-direction: row; 
+            padding: 10px; border-bottom: 2px solid #81C784; 
+            align-items: center; position: relative;
+        }
+        #yokkun-area { border-bottom: none; border-top: 2px solid #81C784; }
+
+        #clock-overlay {
+            height: 10vh; background: #C8E6C9; border: 3px solid #81C784;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        #clock { font-size: 7vh; font-weight: bold; color: #1B5E20; font-family: monospace; }
+
+        .info-side { width: 35%; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .player-name { font-size: 2.2vh; font-weight: bold; margin: 0; }
+        .score-display { font-size: 1.8vh; color: #388E3C; font-weight: bold; }
+        .timer-display { font-size: 4vh; color: #D32F2F; font-weight: bold; background: white; border-radius: 8px; padding: 0 10px; }
+        .individual-reset { font-size: 9px; color: #d32f2f; background: none; border: 1px solid #ffcdd2; border-radius: 4px; padding: 1px 4px; cursor: pointer; margin-top: 5px; }
+
+        .action-side { width: 65%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .task-title { font-size: 3vh; font-weight: bold; color: #2E7D32; margin-bottom: 5px; text-align: center; line-height: 1.2; }
+        .img-box { height: 14vh; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+        .treasure-img { height: 120%; width: auto; max-width: 200px; }
+
+        .btn-done { 
+            background: #8BC34A; color: white; border: none; 
+            padding: 1.2vh 0; width: 65%; font-size: 3vh; font-weight: bold; 
+            border-radius: 15px; box-shadow: 0 4px #689F38; cursor: pointer;
+        }
+        .btn-done:active { transform: translateY(2px); box-shadow: none; }
+
+        /* クリア画面 */
+        .clear-screen { background: linear-gradient(135deg, #FFF9C4, #FFECB3) !important; }
+        .congrats-layer { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.95); z-index: 20; }
+        .pika-text { font-size: 5vh; font-weight: bold; color: #E65100; animation: pika 0.8s infinite; margin: 15px 0; }
+        
+        /* ガチャ起動ボタン */
+        .exchange-btn { 
+            background: #FF9800; color: white; border: none; 
+            padding: 15px 20px; border-radius: 12px; font-size: 3vh; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; 
+            box-shadow: 0 5px #E65100; animation: pika 1s infinite;
+        }
+
+        /* --- ガチャエリアのスタイル --- */
+        #gacha-overlay {
+            display: none; position: fixed; inset: 0; background: #FFF9C4;
+            z-index: 100; flex-direction: column; align-items: center; justify-content: center;
+        }
         #gacha-machine {
-            width: 300px; height: 450px; background: #F44336; border-radius: 40px 40px 20px 20px;
+            width: 280px; height: 400px; background: #F44336; border-radius: 40px 40px 20px 20px;
             border: 8px solid #B71C1C; position: relative; display: flex; flex-direction: column; align-items: center;
         }
         #glass-window {
-            width: 240px; height: 180px; background: #E1F5FE; border: 5px solid #01579B;
-            border-radius: 20px; margin-top: 30px; position: relative; overflow: hidden;
-            display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
+            width: 220px; height: 150px; background: #E1F5FE; border: 5px solid #01579B;
+            border-radius: 20px; margin-top: 25px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center;
         }
-        .mini-capsule { width: 30px; height: 30px; border-radius: 50%; margin: 2px; }
-
-        /* レバー */
+        .mini-capsule { width: 25px; height: 25px; border-radius: 50%; margin: 2px; }
         #lever-container {
-            width: 100px; height: 100px; background: #9E9E9E; border-radius: 50%;
-            margin-top: 40px; border: 5px solid #616161; display: flex; align-items: center; justify-content: center;
+            width: 90px; height: 90px; background: #9E9E9E; border-radius: 50%;
+            margin-top: 30px; border: 5px solid #616161; display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: transform 0.5s;
         }
-        #lever-handle { width: 80px; height: 20px; background: #424242; border-radius: 10px; }
+        #lever-handle { width: 70px; height: 15px; background: #424242; border-radius: 10px; }
         .lever-spin { transform: rotate(360deg); }
-
-        /* 出口 */
-        #exit-hole {
-            width: 80px; height: 60px; background: #333; border-radius: 10px 10px 0 0;
-            position: absolute; bottom: 20px;
-        }
-
-        /* 浮き出てくるカプセル */
         #result-capsule {
-            display: none; position: absolute; width: 150px; height: 150px;
+            display: none; position: absolute; width: 120px; height: 120px;
             border-radius: 50%; z-index: 200; cursor: pointer;
             box-shadow: inset -10px -10px 20px rgba(0,0,0,0.2);
             animation: bounce 0.6s infinite alternate;
         }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
 
-        @keyframes bounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-20px) scale(1.05); } }
-
-        /* チケット表示画面 */
+        /* チケット画面 */
         #ticket-screen {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
             z-index: 300; flex-direction: column; align-items: center; justify-content: center;
             color: white; text-align: center;
         }
         #ticket-card {
-            width: 85%; max-width: 400px; background: white; color: #333;
-            padding: 30px; border-radius: 20px; border: 10px dashed #FF9800;
-            position: relative; overflow: hidden;
+            width: 80%; background: white; color: #333; padding: 25px; border-radius: 20px; border: 8px dashed #FF9800;
         }
-        .rare-sparkle { animation: pika 0.5s infinite; }
-        .srare-sparkle { animation: pika-strong 0.3s infinite; box-shadow: 0 0 50px #FFF176; }
+        .rare-sparkle { animation: pika-light 0.5s infinite; border-color: #4FC3F7 !important; }
+        .srare-sparkle { animation: pika-strong 0.3s infinite; border-color: #FFD54F !important; box-shadow: 0 0 40px #FFD54F; }
 
-        @keyframes pika { 0%, 100% { background: white; } 50% { background: #FFF9C4; } }
-        @keyframes pika-strong { 0%, 100% { background: #FFD54F; transform: scale(1); } 50% { background: #FFF176; transform: scale(1.05); } }
-
-        .btn-close { margin-top: 30px; padding: 15px 40px; font-size: 20px; background: #4CAF50; color: white; border: none; border-radius: 50px; cursor: pointer; }
-
-        /* 元のToDoに戻るボタン（隠し機能的） */
-        #back-to-todo { position: absolute; top: 10px; left: 10px; padding: 5px 10px; font-size: 12px; }
+        @keyframes pika { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        @keyframes pika-light { 0%, 100% { background: white; } 50% { background: #E1F5FE; } }
+        @keyframes pika-strong { 0%, 100% { background: #FFF176; transform: scale(1); } 50% { background: #FFD54F; transform: scale(1.05); } }
     </style>
 </head>
 <body>
 
-    <h1 style="color:#D84315; margin-bottom:10px;">✨ ごほうびガチャ ✨</h1>
-    <p id="player-msg" style="font-weight:bold;"></p>
+    <div id="main-container">
+        <div id="chee-area" class="player-area">
+            <div class="info-side">
+                <div class="player-name">🌟 ちー 🌟</div>
+                <div id="chee-score" class="score-display">累計: 0 pt</div>
+                <div id="chee-timer" class="timer-display">--:--</div>
+                <button class="individual-reset" onclick="clearPoints('chee')">ちーを0にする</button>
+            </div>
+            <div class="action-side" id="chee-content">
+                <div id="chee-title" class="task-title"></div>
+                <div class="img-box"><img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('chee')">できた！</button>
+            </div>
+            <div id="chee-congrats" class="congrats-layer">
+                <h2 style="font-size:3vh; margin:0;">👑 ぜんぶできた！！</h2>
+                <div id="chee-final-points" class="pika-text"></div>
+                <button id="chee-exchange" class="exchange-btn" onclick="openGacha('chee')" style="display:none;">🎁 ガチャをまわす！</button>
+            </div>
+        </div>
 
-    <div id="gacha-machine">
-        <div id="glass-window" id="capsule-container">
-            <script>
-                for(let i=0; i<20; i++) {
-                    const colors = ['#FF5252','#448AFF','#4CAF50','#FFEB3B','#E040FB'];
-                    document.write(`<div class="mini-capsule" style="background:${colors[i%5]}"></div>`);
-                }
-            </script>
+        <div id="clock-overlay"><div id="clock">00:00:00</div></div>
+
+        <div id="yokkun-area" class="player-area">
+            <div class="info-side">
+                <div class="player-name">🌟 よっくん 🌟</div>
+                <div id="yokkun-score" class="score-display">累計: 0 pt</div>
+                <div id="yokkun-timer" class="timer-display">--:--</div>
+                <button class="individual-reset" onclick="clearPoints('yokkun')">よっくんを0にする</button>
+            </div>
+            <div class="action-side" id="yokkun-content">
+                <div id="yokkun-title" class="task-title"></div>
+                <div class="img-box"><img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
+                <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
+            </div>
+            <div id="yokkun-congrats" class="congrats-layer">
+                <h2 style="font-size:3vh; margin:0;">👑 ぜんぶできた！！</h2>
+                <div id="yokkun-final-points" class="pika-text"></div>
+                <button id="yokkun-exchange" class="exchange-btn" onclick="openGacha('yokkun')" style="display:none;">🎁 ガチャをまわす！</button>
+            </div>
         </div>
-        <div id="lever-container" onclick="spinLever()">
-            <div id="lever-handle"></div>
+    </div>
+
+    <div id="gacha-overlay">
+        <h1 id="gacha-user-name" style="color:#D84315; margin-bottom:10px;"></h1>
+        <div id="gacha-machine">
+            <div id="glass-window">
+                <script>for(let i=0;i<15;i++) document.write(`<div class="mini-capsule" style="background:${['#FF5252','#448AFF','#4CAF50','#FFEB3B'][i%4]}"></div>`);</script>
+            </div>
+            <div id="lever-container" onclick="spinLever()"><div id="lever-handle"></div></div>
+            <div style="width:60px; height:40px; background:#333; position:absolute; bottom:20px; border-radius:5px;"></div>
+            <div id="result-capsule" onclick="showPrize()"></div>
         </div>
-        <div id="exit-hole"></div>
-        
-        <div id="result-capsule" onclick="openCapsule()"></div>
+        <button onclick="document.getElementById('gacha-overlay').style.display='none'" style="margin-top:20px; background:none; border:none; text-decoration:underline;">もどる</button>
     </div>
 
     <div id="ticket-screen">
-        <h2 id="rare-label" style="font-size: 30px;"></h2>
+        <h2 id="rare-label" style="font-size:4vh; margin-bottom:10px;"></h2>
         <div id="ticket-card">
-            <p style="font-size: 14px; color: #666;">☆☆ 冒険のごほうびチケット ☆☆</p>
-            <h1 id="prize-name" style="font-size: 32px; margin: 20px 0;"></h1>
-            <p id="prize-desc" style="font-size: 18px; font-weight: bold;"></p>
+            <p>☆☆ ごほうびチケット ☆☆</p>
+            <h1 id="prize-name" style="font-size:4vh; margin:15px 0;"></h1>
         </div>
-        <button class="btn-close" onclick="closeGacha()">またあした！</button>
+        <button class="btn-done" style="margin-top:30px; width:60%;" onclick="location.reload()">またあした！</button>
     </div>
 
     <script>
-        // ガチャの中身と確率
+        const data = {
+            chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
+            yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうぶくろ",s:120},{t:"9）はんかち・うわぎ・ぼうし",s:180},{t:"10）ランドセル！！",s:120}]
+        };
         const prizes = [
-            { n: "YouTube 10分延長", r: "ノーマル", p: 60, c: "#81C784" },
-            { n: "デザートふやせる", r: "ノーマル", p: 60, c: "#81C784" },
-            { n: "代わりにやるよ", r: "ノーマル", p: 60, c: "#81C784" },
-            { n: "すきなジュース", r: "レア", p: 30, c: "#4FC3F7" },
-            { n: "ばんごはんカレー", r: "レア", p: 30, c: "#4FC3F7" },
-            { n: "かか10分ひとりじめ", r: "レア", p: 30, c: "#4FC3F7" },
-            { n: "100円ショップお買い物", r: "Sレア", p: 10, c: "#FFD54F" }
+            {n:"YouTube 10分延長", r:"ノーマル", p:60}, {n:"デザートふやせる", r:"ノーマル", p:60}, {n:"代わりにやるよ", r:"ノーマル", p:60},
+            {n:"すきなジュース", r:"レア", p:30}, {n:"ばんごはんカレー", r:"レア", p:30}, {n:"かか10分ひとりじめ", r:"レア", p:30},
+            {n:"100円ショップお買い物", r:"Sレア", p:10}
         ];
 
-        let isSpinning = false;
+        let players = { chee: {idx:0, left:0, total:0, points:0, tid:null}, yokkun: {idx:0, left:0, total:0, points:0, tid:null} };
+        let activeGachaUser = "";
 
-        function spinLever() {
-            if(isSpinning) return;
-            isSpinning = true;
-            
-            // レバー回転
-            document.getElementById('lever-container').classList.add('lever-spin');
-            
-            setTimeout(() => {
-                // カプセル出現
-                const cap = document.getElementById('result-capsule');
-                const randomColor = ['#FF5252','#448AFF','#4CAF50','#FFEB3B'][Math.floor(Math.random()*4)];
-                cap.style.background = randomColor;
-                cap.style.display = 'block';
-                cap.style.top = '300px'; // 出口付近
-                
-                // ガチャ本体を少し揺らす
-                document.getElementById('gacha-machine').animate([
-                    { transform: 'translateX(0)' },
-                    { transform: 'translateX(5px)' },
-                    { transform: 'translateX(-5px)' },
-                    { transform: 'translateX(0)' }
-                ], { duration: 100, iterations: 5 });
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
+        setInterval(updateClock, 1000);
 
-            }, 600);
+        function save() { localStorage.setItem('adventure_v13', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function load() {
+            const s = localStorage.getItem('adventure_v13');
+            if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
+            updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
+        }
+        function updateScoreDisplay(k) { document.getElementById(`${k}-score`).innerText = `累計: ${players[k].points} pt`; }
+
+        function startTask(k) {
+            let p = players[k]; if(p.tid) clearInterval(p.tid);
+            p.total = p.left = data[k][p.idx].s;
+            document.getElementById(`${k}-title`).innerText = data[k][p.idx].t;
+            p.tid = setInterval(() => {
+                if(p.left > 0) p.left--;
+                const m = Math.floor(p.left/60), s = p.left%60;
+                document.getElementById(`${k}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                document.getElementById(`${k}-img`).style.height = (120 * (p.left/p.total)) + "%";
+            }, 1000);
         }
 
-        function openCapsule() {
-            const cap = document.getElementById('result-capsule');
-            cap.style.display = 'none';
-            document.getElementById('lever-container').classList.remove('lever-spin');
-            
-            // 抽選
-            const rand = Math.random() * 100;
-            let pool = [];
-            if(rand < 10) pool = prizes.filter(x => x.r === "Sレア");
-            else if(rand < 40) pool = prizes.filter(x => x.r === "レア");
-            else pool = prizes.filter(x => x.r === "ノーマル");
-            
-            // 抽選結果が空にならないよう保険
-            if(pool.length === 0) pool = [prizes[0]];
-            const finalPrize = pool[Math.floor(Math.random() * pool.length)];
-
-            // 結果表示
-            const screen = document.getElementById('ticket-screen');
-            const card = document.getElementById('ticket-card');
-            const label = document.getElementById('rare-label');
-            
-            screen.style.display = 'flex';
-            document.getElementById('prize-name').innerText = finalPrize.n;
-            label.innerText = finalPrize.r + "！！";
-            
-            // 演出リセット
-            card.className = "";
-            label.style.color = "white";
-
-            if(finalPrize.r === "レア") {
-                card.classList.add('rare-sparkle');
-                label.style.color = "#4FC3F7";
-                card.style.borderColor = "#4FC3F7";
-            } else if(finalPrize.r === "Sレア") {
-                card.classList.add('srare-sparkle');
-                label.style.color = "#FFD54F";
-                card.style.borderColor = "#FFD54F";
-                label.innerText = "🌟 超レア 🌟";
-            } else {
-                card.style.borderColor = "#FF9800";
+        function nextTask(k) {
+            let p = players[k]; p.points += p.left; updateScoreDisplay(k); save(); p.idx++;
+            if(p.idx < data[k].length) startTask(k);
+            else {
+                clearInterval(p.tid); document.getElementById(`${k}-content`).style.visibility = 'hidden';
+                document.getElementById(`${k}-congrats`).style.display = 'flex';
+                document.getElementById(`${k}-area`).classList.add('clear-screen');
+                document.getElementById(`${k}-final-points`).innerText = `累計 ${p.points} pt！！`;
+                if(p.points >= 5000) document.getElementById(`${k}-exchange`).style.display = 'block';
             }
         }
 
-        function closeGacha() {
-            // 元のToDoページをリロードして戻る
-            location.reload();
+        function clearPoints(k) { if(confirm("ポイントを0にしますか？")){ players[k].points=0; players[k].idx=0; updateScoreDisplay(k); save(); startTask(k); } }
+
+        /* ガチャ処理 */
+        function openGacha(k) {
+            activeGachaUser = k;
+            document.getElementById('gacha-user-name').innerText = (k==='chee'?'ちー':'よっくん') + "のガチャ";
+            document.getElementById('gacha-overlay').style.display = 'flex';
+        }
+        function spinLever() {
+            const lev = document.getElementById('lever-container');
+            if(lev.classList.contains('lever-spin')) return;
+            lev.classList.add('lever-spin');
+            setTimeout(() => {
+                const cap = document.getElementById('result-capsule');
+                cap.style.background = ['#FF5252','#448AFF','#4CAF50','#FFEB3B'][Math.floor(Math.random()*4)];
+                cap.style.display = 'block';
+            }, 600);
+        }
+        function showPrize() {
+            players[activeGachaUser].points -= 5000; save();
+            const rand = Math.random()*100;
+            let pool = rand<10 ? prizes.filter(x=>x.r==="Sレア") : rand<40 ? prizes.filter(x=>x.r==="レア") : prizes.filter(x=>x.r==="ノーマル");
+            const res = pool[Math.floor(Math.random()*pool.length)];
+            
+            document.getElementById('ticket-screen').style.display = 'flex';
+            document.getElementById('prize-name').innerText = res.n;
+            const lbl = document.getElementById('rare-label');
+            const crd = document.getElementById('ticket-card');
+            lbl.innerText = res.r==="Sレア" ? "🌟 超レア 🌟" : res.r + "！！";
+            lbl.style.color = res.r==="Sレア"?"#FFD54F":res.r==="レア"?"#4FC3F7":"white";
+            crd.className = res.r==="Sレア"?"srare-sparkle":res.r==="レア"?"rare-sparkle":"";
         }
 
-        window.onload = () => {
-            // URLから誰が回したか取得（ToDoからの連携用）
-            const urlParams = new URLSearchParams(window.location.search);
-            const user = urlParams.get('p') === 'chee' ? 'ちー' : 'よっくん';
-            document.getElementById('player-msg').innerText = user + "の 5000ptごほうび！";
-        };
+        window.onload = () => { updateClock(); load(); startTask('chee'); startTask('yokkun'); };
     </script>
 </body>
 </html>
