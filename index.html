@@ -13,7 +13,7 @@
         body { display: flex; flex-direction: column; }
         #main-container { flex: 1; display: flex; flex-direction: column; position: relative; }
 
-        /* --- ToDoエリアのスタイル --- */
+        /* --- ToDoエリア --- */
         .player-area { 
             flex: 1; display: flex; flex-direction: row; 
             padding: 10px; border-bottom: 2px solid #81C784; 
@@ -44,14 +44,12 @@
             padding: 1.2vh 0; width: 65%; font-size: 3vh; font-weight: bold; 
             border-radius: 15px; box-shadow: 0 4px #689F38; cursor: pointer;
         }
-        .btn-done:active { transform: translateY(2px); box-shadow: none; }
 
         /* クリア画面 */
         .clear-screen { background: linear-gradient(135deg, #FFF9C4, #FFECB3) !important; }
         .congrats-layer { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.95); z-index: 20; }
         .pika-text { font-size: 5vh; font-weight: bold; color: #E65100; animation: pika 0.8s infinite; margin: 15px 0; }
         
-        /* ガチャ起動ボタン */
         .exchange-btn { 
             background: #FF9800; color: white; border: none; 
             padding: 15px 20px; border-radius: 12px; font-size: 3vh; 
@@ -59,7 +57,7 @@
             box-shadow: 0 5px #E65100; animation: pika 1s infinite;
         }
 
-        /* --- ガチャエリアのスタイル --- */
+        /* --- ガチャエリア --- */
         #gacha-overlay {
             display: none; position: fixed; inset: 0; background: #FFF9C4;
             z-index: 100; flex-direction: column; align-items: center; justify-content: center;
@@ -168,7 +166,7 @@
             <p>☆☆ ごほうびチケット ☆☆</p>
             <h1 id="prize-name" style="font-size:4vh; margin:15px 0;"></h1>
         </div>
-        <button class="btn-done" style="margin-top:30px; width:60%;" onclick="location.reload()">またあした！</button>
+        <button class="btn-done" style="margin-top:30px; width:60%;" onclick="closeTicket()">またあした！</button>
     </div>
 
     <script>
@@ -188,13 +186,22 @@
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
         setInterval(updateClock, 1000);
 
-        function save() { localStorage.setItem('adventure_v13', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function save() { localStorage.setItem('adventure_v14', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
         function load() {
-            const s = localStorage.getItem('adventure_v13');
+            const s = localStorage.getItem('adventure_v14');
             if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
             updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
         }
-        function updateScoreDisplay(k) { document.getElementById(`${k}-score`).innerText = `累計: ${players[k].points} pt`; }
+        function updateScoreDisplay(k) { 
+            const pts = players[k].points;
+            document.getElementById(`${k}-score`).innerText = `累計: ${pts} pt`; 
+            // クリア画面内のポイント表示も更新
+            const finalTxt = document.getElementById(`${k}-final-points`);
+            if(finalTxt) finalTxt.innerText = `累計 ${pts} pt！！`;
+            // 交換ボタンの出し分け
+            const btn = document.getElementById(`${k}-exchange`);
+            if(btn) btn.style.display = (pts >= 5000) ? 'block' : 'none';
+        }
 
         function startTask(k) {
             let p = players[k]; if(p.tid) clearInterval(p.tid);
@@ -215,18 +222,19 @@
                 clearInterval(p.tid); document.getElementById(`${k}-content`).style.visibility = 'hidden';
                 document.getElementById(`${k}-congrats`).style.display = 'flex';
                 document.getElementById(`${k}-area`).classList.add('clear-screen');
-                document.getElementById(`${k}-final-points`).innerText = `累計 ${p.points} pt！！`;
-                if(p.points >= 5000) document.getElementById(`${k}-exchange`).style.display = 'block';
+                updateScoreDisplay(k);
             }
         }
 
         function clearPoints(k) { if(confirm("ポイントを0にしますか？")){ players[k].points=0; players[k].idx=0; updateScoreDisplay(k); save(); startTask(k); } }
 
-        /* ガチャ処理 */
         function openGacha(k) {
             activeGachaUser = k;
             document.getElementById('gacha-user-name').innerText = (k==='chee'?'ちー':'よっくん') + "のガチャ";
             document.getElementById('gacha-overlay').style.display = 'flex';
+            // ガチャ状態リセット
+            document.getElementById('lever-container').classList.remove('lever-spin');
+            document.getElementById('result-capsule').style.display = 'none';
         }
         function spinLever() {
             const lev = document.getElementById('lever-container');
@@ -239,7 +247,9 @@
             }, 600);
         }
         function showPrize() {
-            players[activeGachaUser].points -= 5000; save();
+            players[activeGachaUser].points -= 5000; 
+            updateScoreDisplay(activeGachaUser); save();
+            
             const rand = Math.random()*100;
             let pool = rand<10 ? prizes.filter(x=>x.r==="Sレア") : rand<40 ? prizes.filter(x=>x.r==="レア") : prizes.filter(x=>x.r==="ノーマル");
             const res = pool[Math.floor(Math.random()*pool.length)];
@@ -251,6 +261,12 @@
             lbl.innerText = res.r==="Sレア" ? "🌟 超レア 🌟" : res.r + "！！";
             lbl.style.color = res.r==="Sレア"?"#FFD54F":res.r==="レア"?"#4FC3F7":"white";
             crd.className = res.r==="Sレア"?"srare-sparkle":res.r==="レア"?"rare-sparkle":"";
+        }
+
+        function closeTicket() {
+            // ガチャ画面とチケット画面を閉じるだけ（リロードしない）
+            document.getElementById('ticket-screen').style.display = 'none';
+            document.getElementById('gacha-overlay').style.display = 'none';
         }
 
         window.onload = () => { updateClock(); load(); startTask('chee'); startTask('yokkun'); };
