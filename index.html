@@ -40,11 +40,9 @@
         .action-side { width: 65%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .task-title { font-size: 3vh; font-weight: bold; color: #2E7D32; margin-bottom: 5px; text-align: center; line-height: 1.2; }
         
-        /* 宝箱を20%大きく */
         .img-box { height: 14vh; display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
         .treasure-img { height: 120%; width: auto; max-width: 200px; }
 
-        /* できたボタンを20%小さく */
         .btn-done { 
             background: #8BC34A; color: white; border: none; 
             padding: 1.2vh 0; width: 65%; font-size: 3vh; font-weight: bold; 
@@ -52,11 +50,17 @@
         }
         .btn-done:active { transform: translateY(2px); box-shadow: none; }
 
-        .exchange-btn { background: #FF9800; color: white; border: none; padding: 6px 10px; border-radius: 8px; font-size: 1.8vh; font-weight: bold; cursor: pointer; display: none; margin-top: 5px; animation: pika 1s infinite; }
+        /* クリア画面の交換ボタン */
+        .exchange-btn { 
+            background: #FF9800; color: white; border: none; 
+            padding: 15px 20px; border-radius: 12px; font-size: 3vh; 
+            font-weight: bold; cursor: pointer; margin-top: 10px; 
+            box-shadow: 0 5px #E65100; animation: pika 1s infinite;
+        }
+        .exchange-btn:active { transform: translateY(3px); box-shadow: none; }
         
-        /* クリア後のピカピカ演出 */
-        @keyframes pika { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.05); } }
-        .pika-text { font-size: 4vh; font-weight: bold; color: #E65100; animation: pika 0.8s infinite; margin: 10px 0; }
+        @keyframes pika { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; transform: scale(1.05); } }
+        .pika-text { font-size: 5vh; font-weight: bold; color: #E65100; animation: pika 0.8s infinite; margin: 15px 0; }
 
         .clear-screen { background: linear-gradient(135deg, #FFF9C4, #FFECB3) !important; }
         .congrats-layer { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.95); z-index: 10; }
@@ -69,7 +73,6 @@
             <div class="info-side">
                 <div class="player-name">🌟 ちー 🌟</div>
                 <div id="chee-score" class="score-display">累計: 0 pt</div>
-                <button id="chee-exchange" class="exchange-btn" onclick="exchange('chee')">🎁 ポイントこうかん！</button>
                 <div id="chee-timer" class="timer-display">--:--</div>
                 <button class="individual-reset" onclick="resetPlayer('chee')">ちーを最初から</button>
             </div>
@@ -79,9 +82,9 @@
                 <button class="btn-done" onclick="nextTask('chee')">できた！</button>
             </div>
             <div id="chee-congrats" class="congrats-layer">
-                <h2 style="font-size:3vh; margin:0;">👑 ぜんぶクリア！ 👑</h2>
+                <h2 style="font-size:4vh; margin:0;">👑 ぜんぶできた！！ 👑</h2>
                 <div id="chee-final-points" class="pika-text"></div>
-                <button class="btn-done" style="width:50%; background:#FF9800;" onclick="location.reload()">またあした！</button>
+                <button id="chee-exchange" class="exchange-btn" onclick="exchange('chee')" style="display:none;">🎁 ポイントこうかん！</button>
             </div>
         </div>
 
@@ -93,7 +96,6 @@
             <div class="info-side">
                 <div class="player-name">🌟 よっくん 🌟</div>
                 <div id="yokkun-score" class="score-display">累計: 0 pt</div>
-                <button id="yokkun-exchange" class="exchange-btn" onclick="exchange('yokkun')">🎁 ポイントこうかん！</button>
                 <div id="yokkun-timer" class="timer-display">--:--</div>
                 <button class="individual-reset" onclick="resetPlayer('yokkun')">よっくんを最初から</button>
             </div>
@@ -103,9 +105,9 @@
                 <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
             </div>
             <div id="yokkun-congrats" class="congrats-layer">
-                <h2 style="font-size:3vh; margin:0;">👑 ぜんぶクリア！ 👑</h2>
+                <h2 style="font-size:4vh; margin:0;">👑 ぜんぶできた！！ 👑</h2>
                 <div id="yokkun-final-points" class="pika-text"></div>
-                <button class="btn-done" style="width:50%; background:#FF9800;" onclick="location.reload()">またあした！</button>
+                <button id="yokkun-exchange" class="exchange-btn" onclick="exchange('yokkun')" style="display:none;">🎁 ポイントこうかん！</button>
             </div>
         </div>
     </div>
@@ -124,17 +126,15 @@
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
         setInterval(updateClock, 1000);
 
-        function save() { localStorage.setItem('adventure_v10', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function save() { localStorage.setItem('adventure_v11', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
         function load() {
-            const s = localStorage.getItem('adventure_v10');
+            const s = localStorage.getItem('adventure_v11');
             if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
             updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
         }
 
         function updateScoreDisplay(pKey) {
             document.getElementById(`${pKey}-score`).innerText = `累計: ${players[pKey].points} pt`;
-            const btn = document.getElementById(`${pKey}-exchange`);
-            btn.style.display = (players[pKey].points >= 5000) ? 'inline-block' : 'none';
         }
 
         function startTask(pKey) {
@@ -143,16 +143,15 @@
             p.total = p.left = data[pKey][p.idx].s;
             document.getElementById(`${pKey}-title`).innerText = data[pKey][p.idx].t;
             document.getElementById(`${pKey}-content`).style.visibility = 'visible';
+            document.getElementById(`${pKey}-congrats`).style.display = 'none';
+            document.getElementById(`${pKey}-area`).classList.remove('clear-screen');
             
             p.tid = setInterval(() => {
                 if(p.left > 0) p.left--;
                 const m = Math.floor(p.left/60), s = p.left%60;
                 document.getElementById(`${pKey}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
                 document.getElementById(`${pKey}-img`).style.height = (120 * (p.left/p.total)) + "%";
-                if(p.left <= 0) {
-                    clearInterval(p.tid);
-                    document.getElementById(`${pKey}-timer`).style.color = "#ccc";
-                }
+                if(p.left <= 0) clearInterval(p.tid);
             }, 1000);
         }
 
@@ -169,18 +168,28 @@
                 document.getElementById(`${pKey}-congrats`).style.display = 'flex';
                 document.getElementById(`${pKey}-area`).classList.add('clear-screen');
                 document.getElementById(`${pKey}-final-points`).innerText = `累計 ${p.points} pt ！！`;
+                
+                // 5000pt超えていたら交換ボタンを出す
+                if(p.points >= 5000) {
+                    document.getElementById(`${pKey}-exchange`).style.display = 'block';
+                }
             }
         }
 
         function exchange(pKey) {
             const name = (pKey === 'chee') ? 'ちー' : 'よっくん';
             if(confirm(`5000ポイントたまったね！\n${name}、プレゼントとこうかんしますか？`)){
-                players[pKey].points -= 5000; updateScoreDisplay(pKey); save(); alert('プレゼントとこうかんしました！おめでとう！');
+                players[pKey].points -= 5000;
+                updateScoreDisplay(pKey); 
+                save(); 
+                document.getElementById(`${pKey}-exchange`).style.display = 'none'; // 交換したら消す
+                document.getElementById(`${pKey}-final-points`).innerText = `累計 ${players[pKey].points} pt ！！`;
+                alert('プレゼントとこうかんしました！おめでとう！');
             }
         }
 
         function resetPlayer(pKey) {
-            if(confirm(`今日のタスクを最初からやり直しますか？\n（累計ポイントは消えません）`)){
+            if(confirm(`今日のタスクを最初からやり直しますか？`)){
                 players[pKey].idx = 0;
                 startTask(pKey);
             }
