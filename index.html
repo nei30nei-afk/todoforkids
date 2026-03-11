@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ちー・よっくん 🌟 冒険ToDo & ガチャ</title>
+    <title>ちー・よっくん 🌟 ToDo & ガチャ</title>
     <style>
         html, body { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -28,11 +28,24 @@
         }
         #clock { font-size: 7vh; font-weight: bold; color: #1B5E20; font-family: monospace; }
 
-        .info-side { width: 35%; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .player-name { font-size: 2.2vh; font-weight: bold; margin: 0; }
+        .info-side { width: 35%; display: flex; flex-direction: column; align-items: center; gap: 5px; position: relative; height: 100%; justify-content: center; }
+        
+        /* 名前を大きく変更 */
+        .player-name { font-size: 3.5vh; font-weight: bold; margin: 0; color: #1B5E20; }
+        
         .score-display { font-size: 1.8vh; color: #388E3C; font-weight: bold; }
         .timer-display { font-size: 4vh; color: #D32F2F; font-weight: bold; background: white; border-radius: 8px; padding: 0 10px; }
-        .individual-reset { font-size: 9px; color: #d32f2f; background: none; border: 1px solid #ffcdd2; border-radius: 4px; padding: 1px 4px; cursor: pointer; margin-top: 5px; }
+        
+        /* かかボタン（一時停止） */
+        .kaka-btn {
+            position: absolute; bottom: 5px; left: 5px;
+            background: #FF80AB; color: white; border: none;
+            padding: 5px 15px; border-radius: 10px; font-size: 1.8vh;
+            font-weight: bold; cursor: pointer; box-shadow: 0 2px #C51162;
+        }
+        .kaka-btn.paused { background: #9E9E9E; box-shadow: 0 2px #616161; }
+
+        .individual-reset { font-size: 9px; color: #d32f2f; background: none; border: 1px solid #ffcdd2; border-radius: 4px; padding: 1px 4px; cursor: pointer; position: absolute; top: 0; left: 5px; }
 
         .action-side { width: 65%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .task-title { font-size: 3vh; font-weight: bold; color: #2E7D32; margin-bottom: 5px; text-align: center; line-height: 1.2; }
@@ -108,10 +121,11 @@
     <div id="main-container">
         <div id="chee-area" class="player-area">
             <div class="info-side">
+                <button class="individual-reset" onclick="clearPoints('chee')">リセット</button>
                 <div class="player-name">🌟 ちー 🌟</div>
                 <div id="chee-score" class="score-display">累計: 0 pt</div>
                 <div id="chee-timer" class="timer-display">--:--</div>
-                <button class="individual-reset" onclick="clearPoints('chee')">ちーを0にする</button>
+                <button id="chee-pause" class="kaka-btn" onclick="togglePause('chee')">かか</button>
             </div>
             <div class="action-side" id="chee-content">
                 <div id="chee-title" class="task-title"></div>
@@ -129,10 +143,11 @@
 
         <div id="yokkun-area" class="player-area">
             <div class="info-side">
+                <button class="individual-reset" onclick="clearPoints('yokkun')">リセット</button>
                 <div class="player-name">🌟 よっくん 🌟</div>
                 <div id="yokkun-score" class="score-display">累計: 0 pt</div>
                 <div id="yokkun-timer" class="timer-display">--:--</div>
-                <button class="individual-reset" onclick="clearPoints('yokkun')">よっくんを0にする</button>
+                <button id="yokkun-pause" class="kaka-btn" onclick="togglePause('yokkun')">かか</button>
             </div>
             <div class="action-side" id="yokkun-content">
                 <div id="yokkun-title" class="task-title"></div>
@@ -171,8 +186,8 @@
 
     <script>
         const data = {
-            chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
-            yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうぶくろ",s:120},{t:"9）はんかち・うわぎ・ぼうし",s:180},{t:"10）ランドセル！！",s:120}]
+            chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:1080},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
+            yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうしょくぶくろ",s:180},{t:"9）ハンカチ・ぼうし・きゅうしょくぶくろ",s:300},{t:"10）ランドセル！！",s:120}]
         };
         const prizes = [
             {n:"YouTube 10分延長", r:"ノーマル", p:60}, {n:"デザートふやせる", r:"ノーマル", p:60}, {n:"代わりにやるよ", r:"ノーマル", p:60},
@@ -180,25 +195,26 @@
             {n:"100円ショップお買い物", r:"Sレア", p:10}
         ];
 
-        let players = { chee: {idx:0, left:0, total:0, points:0, tid:null}, yokkun: {idx:0, left:0, total:0, points:0, tid:null} };
+        let players = { 
+            chee: {idx:0, left:0, total:0, points:0, tid:null, isPaused:false}, 
+            yokkun: {idx:0, left:0, total:0, points:0, tid:null, isPaused:false} 
+        };
         let activeGachaUser = "";
 
         function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
         setInterval(updateClock, 1000);
 
-        function save() { localStorage.setItem('adventure_v14', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
+        function save() { localStorage.setItem('adventure_v15', JSON.stringify({c: players.chee.points, y: players.yokkun.points})); }
         function load() {
-            const s = localStorage.getItem('adventure_v14');
+            const s = localStorage.getItem('adventure_v15');
             if(s){ const p = JSON.parse(s); players.chee.points = p.c||0; players.yokkun.points = p.y||0; }
             updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
         }
         function updateScoreDisplay(k) { 
             const pts = players[k].points;
             document.getElementById(`${k}-score`).innerText = `累計: ${pts} pt`; 
-            // クリア画面内のポイント表示も更新
             const finalTxt = document.getElementById(`${k}-final-points`);
             if(finalTxt) finalTxt.innerText = `累計 ${pts} pt！！`;
-            // 交換ボタンの出し分け
             const btn = document.getElementById(`${k}-exchange`);
             if(btn) btn.style.display = (pts >= 5000) ? 'block' : 'none';
         }
@@ -207,22 +223,43 @@
             let p = players[k]; if(p.tid) clearInterval(p.tid);
             p.total = p.left = data[k][p.idx].s;
             document.getElementById(`${k}-title`).innerText = data[k][p.idx].t;
+            p.isPaused = false;
+            updatePauseBtnStyle(k);
             p.tid = setInterval(() => {
-                if(p.left > 0) p.left--;
-                const m = Math.floor(p.left/60), s = p.left%60;
-                document.getElementById(`${k}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
-                document.getElementById(`${k}-img`).style.height = (120 * (p.left/p.total)) + "%";
+                if(!p.isPaused && p.left > 0) {
+                    p.left--;
+                    const m = Math.floor(p.left/60), s = p.left%60;
+                    document.getElementById(`${k}-timer`).innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                    document.getElementById(`${k}-img`).style.height = (120 * (p.left/p.total)) + "%";
+                }
             }, 1000);
         }
 
+        function togglePause(k) {
+            players[k].isPaused = !players[k].isPaused;
+            updatePauseBtnStyle(k);
+        }
+
+        function updatePauseBtnStyle(k) {
+            const btn = document.getElementById(`${k}-pause`);
+            if(players[k].isPaused) {
+                btn.classList.add('paused');
+                btn.innerText = "さいかい";
+            } else {
+                btn.classList.remove('paused');
+                btn.innerText = "かか";
+            }
+        }
+
         function nextTask(k) {
-            let p = players[k]; p.points += p.left; updateScoreDisplay(k); save(); p.idx++;
+            let p = players[k]; p.points += p.left; updateScoreDisplay(k); p.idx++;
             if(p.idx < data[k].length) startTask(k);
             else {
                 clearInterval(p.tid); document.getElementById(`${k}-content`).style.visibility = 'hidden';
                 document.getElementById(`${k}-congrats`).style.display = 'flex';
                 document.getElementById(`${k}-area`).classList.add('clear-screen');
                 updateScoreDisplay(k);
+                save();
             }
         }
 
@@ -232,7 +269,6 @@
             activeGachaUser = k;
             document.getElementById('gacha-user-name').innerText = (k==='chee'?'ちー':'よっくん') + "のガチャ";
             document.getElementById('gacha-overlay').style.display = 'flex';
-            // ガチャ状態リセット
             document.getElementById('lever-container').classList.remove('lever-spin');
             document.getElementById('result-capsule').style.display = 'none';
         }
@@ -249,11 +285,9 @@
         function showPrize() {
             players[activeGachaUser].points -= 5000; 
             updateScoreDisplay(activeGachaUser); save();
-            
             const rand = Math.random()*100;
             let pool = rand<10 ? prizes.filter(x=>x.r==="Sレア") : rand<40 ? prizes.filter(x=>x.r==="レア") : prizes.filter(x=>x.r==="ノーマル");
             const res = pool[Math.floor(Math.random()*pool.length)];
-            
             document.getElementById('ticket-screen').style.display = 'flex';
             document.getElementById('prize-name').innerText = res.n;
             const lbl = document.getElementById('rare-label');
@@ -262,9 +296,7 @@
             lbl.style.color = res.r==="Sレア"?"#FFD54F":res.r==="レア"?"#4FC3F7":"white";
             crd.className = res.r==="Sレア"?"srare-sparkle":res.r==="レア"?"rare-sparkle":"";
         }
-
         function closeTicket() {
-            // ガチャ画面とチケット画面を閉じるだけ（リロードしない）
             document.getElementById('ticket-screen').style.display = 'none';
             document.getElementById('gacha-overlay').style.display = 'none';
         }
