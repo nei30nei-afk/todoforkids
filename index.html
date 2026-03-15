@@ -58,9 +58,22 @@
 
         /* おたから袋モーダル */
         #bag-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 400; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .bag-content { width: 85%; background: white; color: #333; border-radius: 20px; padding: 20px; max-height: 70vh; overflow-y: auto; }
+        .bag-content { width: 85%; background: white; color: #333; border-radius: 20px; padding: 20px; max-height: 70vh; overflow-y: auto; position: relative; }
         .ticket-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
         .use-btn { background: #4FC3F7; color: white; border: none; padding: 5px 15px; border-radius: 8px; font-weight: bold; }
+
+        /* スタンプ演出 */
+        .stamp-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg) scale(5);
+            color: rgba(211, 47, 47, 0.8);
+            border: 8px solid rgba(211, 47, 47, 0.8);
+            padding: 10px 20px; font-size: 6vh; font-weight: bold;
+            border-radius: 15px; z-index: 1000; opacity: 0;
+            pointer-events: none; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255,255,255,0.8);
+        }
+        .stamp-active { opacity: 1; transform: translate(-50%, -50%) rotate(-10deg) scale(1); }
 
         #gacha-overlay { display: none; position: fixed; inset: 0; background: #FFF9C4; z-index: 100; flex-direction: column; align-items: center; justify-content: center; }
         #gacha-machine { width: 260px; height: 380px; background: #F44336; border-radius: 40px 40px 20px 20px; border: 8px solid #B71C1C; position: relative; display: flex; flex-direction: column; align-items: center; }
@@ -97,7 +110,7 @@
             <div class="action-side" id="chee-content">
                 <div id="chee-title" class="task-title"></div>
                 <div class="img-box"><img id="chee-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
-                <button class="btn-done" onclick="nextTask('chee')">できた！</button>
+                <button class="btn-done" onclick="handleDone('chee')">できた！</button>
             </div>
             <div id="chee-congrats" class="congrats-layer">
                 <h2 style="font-size:3vh; margin:0;">👑 ぜんぶできた！！</h2>
@@ -125,7 +138,7 @@
             <div class="action-side" id="yokkun-content">
                 <div id="yokkun-title" class="task-title"></div>
                 <div class="img-box"><img id="yokkun-img" class="treasure-img" src="https://i.imgur.com/doOjZrX.png"></div>
-                <button class="btn-done" onclick="nextTask('yokkun')">できた！</button>
+                <button class="btn-done" onclick="handleDone('yokkun')">できた！</button>
             </div>
             <div id="yokkun-congrats" class="congrats-layer">
                 <h2 style="font-size:3vh; margin:0;">👑 ぜんぶできた！！</h2>
@@ -137,7 +150,10 @@
 
     <div id="bag-modal">
         <h2 id="bag-owner-name" style="margin-bottom:10px;"></h2>
-        <div class="bag-content" id="bag-list"></div>
+        <div class="bag-content">
+            <div id="bag-list"></div>
+            <div id="stamp" class="stamp-overlay">つかった！</div>
+        </div>
         <button onclick="document.getElementById('bag-modal').style.display='none'" style="margin-top:20px; color:white; background:none; border:1px solid white; padding:10px 20px; border-radius:10px;">とじる</button>
     </div>
 
@@ -161,6 +177,20 @@
     </div>
 
     <script>
+        // 音響システム
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playCoinSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+            osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+
         const data = {
             chee: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）てをあらう！！",s:120},{t:"4）ごはん！！",s:1080},{t:"5）うんち！！",s:480},{t:"6）きがえる！！",s:300},{t:"7）すー！はー！！",s:120},{t:"8）はをみがく！！",s:300},{t:"9）めがね！！！",s:120},{t:"10）うわぎ！！！",s:180}],
             yokkun: [{t:"1）おきる！！",s:600},{t:"2）おしっこ！！",s:300},{t:"3）手をあらう！！",s:120},{t:"4）ごはん！！",s:900},{t:"5）うんち！！",s:600},{t:"6）きがえる！！",s:180},{t:"7）はをみがく！！",s:300},{t:"8）すいとう・きゅうしょくぶくろ",s:180},{t:"9）ハンカチ・うわぎ・ぼうし",s:300},{t:"10）ランドセル！！",s:120}]
@@ -175,25 +205,26 @@
             chee: {idx:0, left:0, total:0, points:0, tid:null, isPaused:false, history:[], tickets:{}}, 
             yokkun: {idx:0, left:0, total:0, points:0, tid:null, isPaused:false, history:[], tickets:{}} 
         };
-        let activeGachaUser = "";
-
-        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
-        setInterval(updateClock, 1000);
 
         function save() { 
-            localStorage.setItem('adventure_v16', JSON.stringify({
+            localStorage.setItem('adventure_v17', JSON.stringify({
                 c: players.chee.points, y: players.yokkun.points,
                 ct: players.chee.tickets, yt: players.yokkun.tickets
             })); 
         }
         function load() {
-            const s = localStorage.getItem('adventure_v16');
+            const s = localStorage.getItem('adventure_v17');
             if(s){ 
                 const p = JSON.parse(s); 
                 players.chee.points = p.c||0; players.yokkun.points = p.y||0; 
                 players.chee.tickets = p.ct||{}; players.yokkun.tickets = p.yt||{};
             }
             updateScoreDisplay('chee'); updateScoreDisplay('yokkun');
+        }
+
+        function handleDone(k) {
+            playCoinSound();
+            nextTask(k);
         }
 
         function updateScoreDisplay(k) { 
@@ -208,11 +239,10 @@
             let p = players[k]; if(p.tid) clearInterval(p.tid);
             p.total = p.left = data[k][p.idx].s;
             document.getElementById(`${k}-title`).innerText = data[k][p.idx].t;
-            p.isPaused = false; updatePauseBtnStyle(k);
+            p.isPaused = false;
             document.getElementById(`${k}-content`).style.visibility = 'visible';
             document.getElementById(`${k}-congrats`).style.display = 'none';
             document.getElementById(`${k}-area`).classList.remove('clear-screen');
-
             p.tid = setInterval(() => {
                 if(!p.isPaused && p.left > 0) {
                     p.left--;
@@ -223,42 +253,31 @@
             }, 1000);
         }
 
-        function togglePause(k) { players[k].isPaused = !players[k].isPaused; updatePauseBtnStyle(k); }
-        function updatePauseBtnStyle(k) {
-            const btn = document.getElementById(`${k}-pause`);
-            btn.innerText = players[k].isPaused ? "さいかい" : "かか";
-            if(players[k].isPaused) btn.classList.add('paused'); else btn.classList.remove('paused');
-        }
+        function togglePause(k) { players[k].isPaused = !players[k].isPaused; document.getElementById(`${k}-pause`).innerText = players[k].isPaused ? "さいかい" : "かか"; }
 
         function nextTask(k) {
-            let p = players[k]; 
-            p.history.push(p.left); // 獲得ポイントを履歴に保存
-            p.points += p.left; 
+            let p = players[k]; p.history.push(p.left); p.points += p.left; 
             updateScoreDisplay(k); p.idx++;
             if(p.idx < data[k].length) startTask(k);
-            else {
-                clearInterval(p.tid); document.getElementById(`${k}-content`).style.visibility = 'hidden';
-                document.getElementById(`${k}-congrats`).style.display = 'flex';
-                document.getElementById(`${k}-area`).classList.add('clear-screen');
-                save();
-            }
+            else { clearInterval(p.tid); document.getElementById(`${k}-content`).style.visibility = 'hidden'; document.getElementById(`${k}-congrats`).style.display = 'flex'; document.getElementById(`${k}-area`).classList.add('clear-screen'); save(); }
         }
 
         function goBack(k) {
-            let p = players[k];
-            if(p.idx <= 0) return;
-            // 最後の履歴からポイントを引く
-            const lastPt = p.history.pop() || 0;
-            p.points -= lastPt;
-            p.idx--;
-            updateScoreDisplay(k);
-            startTask(k);
+            let p = players[k]; if(p.idx <= 0) return;
+            p.points -= (p.history.pop() || 0); p.idx--;
+            updateScoreDisplay(k); startTask(k);
         }
 
         function openBag(k) {
             const modal = document.getElementById('bag-modal');
             const list = document.getElementById('bag-list');
             document.getElementById('bag-owner-name').innerText = (k==='chee'?'ちー':'よっくん') + "のおたから袋";
+            renderList(k);
+            modal.style.display = 'flex';
+        }
+
+        function renderList(k) {
+            const list = document.getElementById('bag-list');
             list.innerHTML = "";
             const tks = players[k].tickets;
             Object.keys(tks).forEach(name => {
@@ -270,31 +289,35 @@
                 }
             });
             if(list.innerHTML === "") list.innerHTML = "<p style='text-align:center;'>まだチケットがないよ</p>";
-            modal.style.display = 'flex';
         }
 
         function useTicket(k, name) {
             if(confirm(`${name} をつかいますか？`)) {
-                players[k].tickets[name]--;
-                save();
-                openBag(k);
+                // スタンプ演出
+                const s = document.getElementById('stamp');
+                s.classList.add('stamp-active');
+                
+                setTimeout(() => {
+                    players[k].tickets[name]--;
+                    save();
+                    s.classList.remove('stamp-active');
+                    renderList(k);
+                }, 800);
             }
         }
 
+        // ガチャ・共通機能
         function openGacha(k) {
             activeGachaUser = k;
             document.getElementById('gacha-user-name').innerText = (k==='chee'?'ちー':'よっくん') + "のガチャ";
-            const win = document.getElementById('glass-window');
-            win.innerHTML = "";
+            const win = document.getElementById('glass-window'); win.innerHTML = "";
             for(let i=0;i<15;i++) win.innerHTML += `<div style="width:25px;height:25px;border-radius:50%;margin:2px;background:${['#FF5252','#448AFF','#4CAF50','#FFEB3B'][i%4]}"></div>`;
             document.getElementById('gacha-overlay').style.display = 'flex';
             document.getElementById('lever-container').classList.remove('lever-spin');
             document.getElementById('result-capsule').style.display = 'none';
         }
-
         function spinLever() {
-            const lev = document.getElementById('lever-container');
-            if(lev.classList.contains('lever-spin')) return;
+            const lev = document.getElementById('lever-container'); if(lev.classList.contains('lever-spin')) return;
             lev.classList.add('lever-spin');
             setTimeout(() => {
                 const cap = document.getElementById('result-capsule');
@@ -302,29 +325,21 @@
                 cap.style.display = 'block';
             }, 600);
         }
-
         function showPrize() {
             players[activeGachaUser].points -= 5000;
             const rand = Math.random()*100;
             let pool = rand<10 ? prizes.filter(x=>x.r==="Sレア") : rand<40 ? prizes.filter(x=>x.r==="レア") : prizes.filter(x=>x.r==="ノーマル");
             const res = pool[Math.floor(Math.random()*pool.length)];
-            
-            // チケットをストックに追加
             players[activeGachaUser].tickets[res.n] = (players[activeGachaUser].tickets[res.n] || 0) + 1;
             save(); updateScoreDisplay(activeGachaUser);
-
             document.getElementById('ticket-screen').style.display = 'flex';
             document.getElementById('prize-name').innerText = res.n;
             document.getElementById('rare-label').innerText = res.r + "！！";
         }
-
-        function closeTicket() {
-            document.getElementById('ticket-screen').style.display = 'none';
-            document.getElementById('gacha-overlay').style.display = 'none';
-        }
-
+        function closeTicket() { document.getElementById('ticket-screen').style.display = 'none'; document.getElementById('gacha-overlay').style.display = 'none'; }
         function clearPoints(k) { if(confirm("ポイントを0にしますか？")){ players[k].points=0; players[k].idx=0; players[k].history=[]; updateScoreDisplay(k); save(); startTask(k); } }
-
+        function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleTimeString('ja-JP'); }
+        setInterval(updateClock, 1000);
         window.onload = () => { updateClock(); load(); startTask('chee'); startTask('yokkun'); };
     </script>
 </body>
